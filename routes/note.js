@@ -38,7 +38,7 @@ function findNoteList(dir, callback) {
   let redStream
   console.log(files)
 
-  files.forEach(val => {
+  files.forEach((val, index) => {
     let obj = {}
     if (val.endsWith('.md')) {
       obj.name = val.split('.md')[0]
