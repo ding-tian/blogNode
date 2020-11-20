@@ -14,7 +14,7 @@ var http = require('http')
  * 从环境获取港口并快速储存。
  */
 // 端口号
-var port = normalizePort(process.env.PORT || '80')
+var port = normalizePort(process.env.PORT || '3344')
 app.set('port', port)
 
 /**
