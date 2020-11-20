@@ -9,29 +9,23 @@ const fs = require('fs')
 // 引入解析markdown模块
 const marked = require('marked')
 
+let fsPath = path.join(__dirname, '../', 'note')
+// console.log(fsPath)
 // 返回笔记列表
 router.get('/findNoteList', (req, res, next) => {
   // 获取分页的参数
   // let { page, size } = req.query
-  findNoteList('./note', function (data) {
+  findNoteList(fsPath, function (data) {
     res.json(data)
-    // 分页的开始
-    // const start = (page - 1) * size
-    // 分页的结束
-    // const end = page * size
-    // 筛选符合要求的数组
-    // const newData = data.filter((ele, index) => start <= index && index < end)
-    // 总数量
-    // const total = data.length
-    // 返回笔记列表
-    // res.json({ noteList: newData, total })
   })
 })
 // 返回笔记详情
 router.get('/getNoteByName/:name', (req, res, next) => {
   const { name: fileNmae } = req.params
-
-  fs.readFile('./note/' + fileNmae + '.md', 'utf-8', (err, data) => {
+  let notePath = fsPath + '\\' + fileNmae + '.md'
+  console.log(fileNmae)
+  console.log(notePath)
+  fs.readFile(notePath, 'utf-8', (err, data) => {
     if (err) throw new Error('文件不存在')
     res.json(marked(data))
   })
@@ -84,7 +78,7 @@ function findNoteList(dir, callback) {
         redStream.on('end', function () {
           // console.log(list)
           if (index === arr.length - 1) {
-            list.forEach((file) => {
+            list.forEach(file => {
               let fileAry = file.name.split('\\')
               file.name = fileAry.pop().slice(0, -3)
               newList.push(file)
