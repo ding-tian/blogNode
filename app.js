@@ -57,7 +57,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 // 配置静态文件地址
-app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(__dirname, 'dist')))
 // 配置路由
 app.use('/note', noteRouter)
 app.use('/', indexRouter)
