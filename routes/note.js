@@ -15,17 +15,17 @@ let fsPath = path.join(__dirname, '../', 'note')
 router.get('/findNoteList', (req, res, next) => {
   // 获取分页的参数
   // let { page, size } = req.query
-  findNoteList(fsPath, function (data) {
+  const data = findNoteList(fsPath, function (data) {
     res.json(data)
   })
 })
 // 返回笔记详情
 router.get('/getNoteByName/:name', (req, res, next) => {
   const { name: fileNmae } = req.params
-  let notePath = fsPath + '\\' + fileNmae + '.md'
+  let notePath = path.join(fsPath, fileNmae)
   console.log(fileNmae)
   console.log(notePath)
-  fs.readFile(notePath, 'utf-8', (err, data) => {
+  fs.readFile(notePath + '.md', 'utf-8', (err, data) => {
     if (err) throw new Error('文件不存在')
     res.json(marked(data))
   })
@@ -33,65 +33,36 @@ router.get('/getNoteByName/:name', (req, res, next) => {
 
 // 返回文件中所有的md文件夹名称
 function findNoteList(dir, callback) {
-  let list = []
-  let newList = []
+  let result = []
+  let files = fs.readdirSync(dir)
   let redStream
-  try {
-    // 递归查找出所有.md文件的路径
-    function listFile(dir) {
-      // 返回dir的目录
-      var arr = fs.readdirSync(dir)
-      // 变量这个目录
-      arr.forEach((item, index) => {
-        // 将dir与文件夹中的文件拼接
-        var fullpath = path.join(dir, item)
-        // 返回一个stats对象
-        var stats = fs.statSync(fullpath)
-        // 判断是否文件夹
-        if (stats.isDirectory()) {
-          // 如果是文件夹, 调用方法继续查找
-          listFile(fullpath)
-        } else {
-          let obj = {}
-          if (fullpath.endsWith('.md')) {
-            // 设置文件名
-            obj.name = fullpath
-            // 设置文件上次修改时间
-            obj.ctime = stats.ctimeMs
-            // 读取流
-            redStream = fs.createReadStream(fullpath, {
-              // 一次读取的字节数
-              highWaterMark: 150
-            })
-            // 从可读流读取的数据设置字符编码
-            redStream.setEncoding('utf8')
-            // 调用data事件自动开始读取数据
-            redStream.once('data', function (chunk) {
-              // console.log(chunk)
-              chunk = chunk.replace(/[#_>.-~`*:-]*/g, '')
-              obj.content = chunk
-            })
-            list.push(obj)
-          }
-        }
-        // 监听读取结束事件
-        redStream.on('end', function () {
-          // console.log(list)
-          if (index === arr.length - 1) {
-            list.forEach(file => {
-              let fileAry = file.name.split('\\')
-              file.name = fileAry.pop().slice(0, -3)
-              newList.push(file)
-            })
-            callback(newList)
-          }
-        })
+  console.log(files)
+
+  files.forEach(val => {
+    let obj = {}
+    if (val.endsWith('.md')) {
+      obj.name = val.split('.md')[0]
+      obj.ctime = fs.statSync(path.join(fsPath, val)).ctime
+      // 读取流
+      redStream = fs.createReadStream(path.join(fsPath, val), {
+        // 一次读取的字节数
+        highWaterMark: 150
+      })
+      // 从可读流读取的数据设置字符编码
+      redStream.setEncoding('utf8')
+      // 调用data事件自动开始读取数据
+      redStream.once('data', function (chunk) {
+        // console.log(chunk)
+        chunk = chunk.replace(/[#_>.-~`*:-]*/g, '')
+        obj.content = chunk
+        result.push(obj)
       })
     }
-    listFile(dir)
-  } catch (err) {
-    throw new Error(err)
-  }
+  })
+  // 监听读取结束事件
+  redStream.on('end', function () {
+    callback(result)
+  })
 }
 
 // 导出note路由
